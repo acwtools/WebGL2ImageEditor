@@ -1,0 +1,55 @@
+body {
+	/* using CSS3 gradients would be much more sophisticated, but where flickering on scrolling in Chrome */
+	background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKAQMAAAC3/F3+AAAABlBMVEXd3d3w8PCyWQzjAAAAEUlEQVQIW2Nk38mIjH5wICMAez4Iyz2C/F8AAAAASUVORK5CYII=);
+	font-family: sans-serif;
+	margin: 0;
+	padding: 0;
+	display: flex;
+}
+
+body::after {
+	content: " ";
+	clear: both;
+}
+
+.leftmenu {
+	background: #eaeaff;
+	min-height: 400px;
+	margin: 10px;
+	padding: 20px;
+	width: 265px;
+}
+
+.heading {
+	font-size: 1.5em;
+	margin: 0 0 5px;
+}
+
+.description {
+	font-size: .75em;
+}
+
+.main {
+	margin-top: 10px;
+}
+
+
+.slider {
+	margin:5px;
+}
+
+.slider-number {
+	background: transparent;
+	border: none;
+	float: right;
+	text-align: right;
+	width: 175px;
+}
+
+.slider-range {
+	width: 255px;
+}
+
+.image {
+	margin: 10px 10px 20px;
+}

@@ -1,0 +1,16 @@
+{
+  "name": "webgl2imagemanipulator",
+  "version": "1.0.0",
+  "description": "a WebGL2 based image editor",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "./node_modules/webpack/bin/webpack.js src/js/app.js dist/js/app.js",
+    "doc": "jsdoc src/ readme.md -r -d docs"
+  },
+  "author": "Gandalf Sievers <gandalf@acwtools.org> (http://www.acwtools.org)",
+  "license": "MIT",
+  "dependencies": {
+    "webpack": "^2.3.3"
+  }
+}

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: test.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: test.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Created by gs on 28.03.17.
+ */
+
+import Compiler from './Compiler';
+
+import vertexShaderSource from './shader/vertex';
+import fragmentShaderSource from './shader/fragment';
+
+const canvas = document.getElementById('c');
+const gl = canvas.getContext('webgl2');
+
+if (!gl) {
+  throw Error('no webgl2 support!');
+}
+
+const sliders = document.querySelectorAll('input[type="range"]');
+const numbers = document.querySelectorAll('input[type="number"]');
+
+const comp = new Compiler(gl);
+
+const program = comp.compile(vertexShaderSource, fragmentShaderSource);
+const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+// const resolutionUniformLocation = gl.getUniformLocation(program, 'u_resolution');
+const texCoordAttributeLocation = gl.getAttribLocation(program, 'a_texCoord');
+const imageLocation = gl.getUniformLocation(program, 'u_image');
+const colorLocation = gl.getUniformLocation(program, 'u_color');
+const brightnessLocation = gl.getUniformLocation(program, 'u_brightness');
+const contrastLocation = gl.getUniformLocation(program, 'u_contrast');
+const vibranceLocation = gl.getUniformLocation(program, 'u_vibrance');
+
+const vao = gl.createVertexArray();
+
+const texture = gl.createTexture();
+
+/**
+ * @return {[]} Fixed rectangle Dimensions
+ */
+function createRectangle() {
+
+  const x = -1.0;
+  const y = 1.0;
+  const y1 = -1.0;
+  const x1 = 1.0;
+
+  return [
+    x, y,
+    x1, y,
+    x, y1,
+    x, y1,
+    x1, y,
+    x1, y1];
+  /*
+   return [
+   -1.0, 1.0,
+   1.0, 1.0,
+   -1.0, -1.0,
+   -1.0, -1.0,
+   1.0, -1.0,
+   1.0, -1.0];*/
+}
+
+/**
+ * @param {Image} image HTMLImage Element
+ * @return {undefined} does not return anything
+ */
+function initCanvas() {
+  const positionBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+// three 2d points
+  const positions = createRectangle();
+  console.log(positions);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1.0, 1.0,
+    1.0, 1.0,
+    -1.0, -1.0,
+    -1.0, -1.0,
+    1.0, 1.0,
+    1.0, -1.0]), gl.STATIC_DRAW);
+  // Set a random color.
+
+  gl.bindVertexArray(vao);
+
+  gl.enableVertexAttribArray(positionAttributeLocation);
+
+  // size * sizeof(type) each iteration to get the next position
+  gl.vertexAttribPointer(
+    positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  // provide texture coordinates for the rectangle.
+  const texCoordBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    0.0, 0.0,
+    1.0, 0.0,
+    0.0, 1.0,
+    0.0, 1.0,
+    1.0, 0.0,
+    1.0, 1.0]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(texCoordAttributeLocation);
+
+  gl.vertexAttribPointer(
+    texCoordAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+  // resize(gl.canvas);
+  // Set canvas size
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+  // Clear the canvas
+  gl.clearColor(0, 0, 0, 0);
+}
+
+function addImage(image) {
+  canvas.width = image.width;
+  canvas.height = image.height;
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+  // Create a texture.
+
+  // make unit 0 the active texture uint
+  // (ie, the unit all other texture commands will affect
+  gl.activeTexture(gl.TEXTURE0 + 0);
+
+  // Bind it to texture unit 0' 2D bind point
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  // Set the parameters so we don't need mips and so we're not filtering
+  // and we don't repeat
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  // Upload the image into the texture.
+  gl.texImage2D(gl.TEXTURE_2D,
+    0,
+    gl.RGBA,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
+    image);
+}
+
+function render() {
+  gl.clear(gl.COLOR_BUFFER_BIT);
+
+  // Tell it to use our program (pair of shaders)
+  gl.useProgram(program);
+
+  // Bind the attribute/buffer set we want.
+  gl.bindVertexArray(vao);
+
+  // gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+
+  const brightness = sliders[0].value;
+  const contrast = sliders[1].value;
+  const vibrance = sliders[2].value;
+
+  const r = sliders[3].value;
+  const g = sliders[4].value;
+  const b = sliders[5].value;
+
+  gl.uniform1f(brightnessLocation, brightness);
+  gl.uniform1f(contrastLocation, contrast);
+  gl.uniform1f(vibranceLocation, vibrance);
+  gl.uniform4f(colorLocation, r, g, b, 1);
+  console.log({ r, g, b });
+
+  // Tell the shader to get the texture from texture unit 0
+  gl.uniform1i(imageLocation, 0);
+
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  console.log('rendered');
+}
+
+/**
+ * @param {number} nr slider index
+ * @return {undefined} does not return anything
+ */
+function addSliderBinding(nr) {
+  sliders[nr].addEventListener('change', () => {
+    numbers[nr].value = sliders[nr].value;
+    render();
+  });
+  numbers[nr].addEventListener('change', () => {
+    sliders[nr].value = numbers[nr].value;
+    render();
+  });
+}
+
+/**
+ * @return {render} returns function to update the image
+ */
+function init() {
+  initCanvas();
+  for (let i = 0, iLen = sliders.length; i &lt; iLen; i++) {
+    addSliderBinding(i, render);
+  }
+  return function drawImage(image) {
+    addImage(image);
+    render();
+  };
+}
+
+export default init;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Compiler.html">Compiler</a></li><li><a href="ImageManipulator.html">ImageManipulator</a></li></ul><h3>Global</h3><ul><li><a href="global.html#addSliderBinding">addSliderBinding</a></li><li><a href="global.html#callbackF">callbackF</a></li><li><a href="global.html#createRectangle">createRectangle</a></li><li><a href="global.html#init">init</a></li><li><a href="global.html#initCanvas">initCanvas</a></li><li><a href="global.html#setValue">setValue</a></li><li><a href="global.html#uploadListener">uploadListener</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Apr 06 2017 22:14:51 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
